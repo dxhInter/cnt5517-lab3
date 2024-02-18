@@ -1,0 +1,7 @@
+[
+{
+  "directory": "/home/pi/lab3/build",
+  "command": "/usr/bin/aarch64-linux-gnu-g++ -DCPPREST_FORCE_HTTP_CLIENT_ASIO -DCPPREST_FORCE_HTTP_LISTENER_ASIO -DCPPREST_NO_SSL_LEAK_SUPPRESS  -g -std=gnu++14 -o CMakeFiles/main.dir/main.cpp.o -c /home/pi/lab3/main.cpp",
+  "file": "/home/pi/lab3/main.cpp"
+}
+]
