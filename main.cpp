@@ -9,6 +9,7 @@ using namespace std::chrono_literals;
 
 #include "metronome.hpp"
 #include "rest.hpp"
+#include "main.h"
 
 // ** Remember to update these numbers to your personal setup. **
 #define LED_RED   17
@@ -22,7 +23,7 @@ using namespace std::chrono_literals;
 // Mark as volatile to enable thread safety.
 volatile bool btn_mode_pressed = false;
 volatile bool is_startup = true; // The startup state of the LED false for on, ture for off.
-size_t blink_frequency; // The frequency of the LED blinking.
+size_t blink_gap_time; // The blink gap time of the LED, the default value is 1000ms.
 metronome metro; // The metronome object.
 std::vector<size_t> bpm_list; // The list of BPMs.
 
@@ -33,7 +34,8 @@ void blink() {
 	// ** This loop manages LED blinking. **
 	while (true) {
 		// The LED state will toggle once every second.
-		std::this_thread::sleep_for(std::chrono::milliseconds(blink_frequency));
+		// when the bpm is 120, the LED will blink at the frequency of 500ms, so the blink_gap_time is 500.
+		std::this_thread::sleep_for(std::chrono::milliseconds(blink_gap_time));
 		// Perform the blink if we are pressed,
 		// otherwise just set it to off.
 		if (!metro.is_timing() && !is_startup){
@@ -90,13 +92,26 @@ void msg_wrong_reply(web::http::http_request msg, std::string content, web::http
 }
 
 /**
+ * @brief Helper function to send the reply when deleting the BPM
+ * @param isSuccess true if the BPM is deleted successfully
+ * @param msg the http request
+*/
+void deleteBPMUtil(bool isSuccess, web::http::http_request msg){
+	if (isSuccess == false){
+		msg_wrong_reply(msg, "Bad Request, please check the bpm value", web::http::status_codes::BadRequest);
+	}else {
+		msg_reply(msg, 0, 0);
+	}
+}
+
+/**
  * @brief Update the blink frequency
 */
 void updateBPM() {
-	blink_frequency = metro.get_bpm();
-	if(blink_frequency != 0){
+	size_t curr_bpm = metro.get_bpm();
+	if(curr_bpm != 0){
 		// The frequency of the LED blinking is 60 seconds divided by the BPM.
-		blink_frequency = (60*1000) / blink_frequency;
+		blink_gap_time = (60*1000) / curr_bpm;
 		// The LED will blink at the frequency of the BPM.
 		is_startup = false;
 	} else{
@@ -143,22 +158,22 @@ void getBPMlist(web::http::http_request msg) {
 
 // The REST service to get the MIN and MAX BPM
 void getMIN(web::http::http_request msg) {
-	msg_reply(msg, metro.getMIN_MAX(MIN), 1);
+	msg_reply(msg, metro.getMinOrMax(MIN), 1);
 }
 void getMAX(web::http::http_request msg) {
-	msg_reply(msg, metro.getMIN_MAX(MAX), 1);
+	msg_reply(msg, metro.getMinOrMax(MAX), 1);
 }
 
 // The REST service to delete the MIN and MAX BPM
-void delMIN(web::http::http_request msg) {
-	metro.delMIN_MAX(MIN);
+void deleteMIN(web::http::http_request msg) {
+	bool isSuccess = metro.deleteMinOrMax(MIN);
 	updateBPM();
-	msg_reply(msg, 0 ,0);
+	deleteBPMUtil(isSuccess, msg);
 }
-void delMAX(web::http::http_request msg) {
-	metro.delMIN_MAX(MAX);
+void deleteMAX(web::http::http_request msg) {
+	bool isSuccess = metro.deleteMinOrMax(MAX);
 	updateBPM();
-	msg_reply(msg, 0 ,0);
+	deleteBPMUtil(isSuccess, msg);
 }
 
 /**
@@ -190,11 +205,7 @@ void deleteBPM(web::http::http_request msg){
 			auto bpmValue = req_body[U("bpm")].as_integer();
 			bool isSuccess = metro.deleteBeatByValue(bpmValue);
 			updateBPM();
-			if (isSuccess == false){
-				msg_wrong_reply(msg, "Bad Request, please check the bpm value", web::http::status_codes::BadRequest);
-			}else {
-				msg_reply(msg, 0, 0);
-			}
+			deleteBPMUtil(isSuccess, msg);
 		}catch(const std::exception& e){
 			msg_wrong_reply(msg, "Bad Request, please check the bpm value", web::http::status_codes::BadRequest);
 			std::cerr << e.what() << std::endl;
@@ -236,9 +247,9 @@ int main() {
 	getBPM_rest.support(web::http::methods::GET, getBPM);
 	getBPM_rest.support(web::http::methods::PUT, setBPM);
 	getMIN_rest.support(web::http::methods::GET, getMIN);
-	getMIN_rest.support(web::http::methods::DEL, delMIN);
+	getMIN_rest.support(web::http::methods::DEL, deleteMIN);
 	getMAX_rest.support(web::http::methods::GET, getMAX);
-	getMAX_rest.support(web::http::methods::DEL, delMAX);
+	getMAX_rest.support(web::http::methods::DEL, deleteMAX);
 	getBPMLIST_rest.support(web::http::methods::GET, getBPMlist);
 	getBPMLIST_rest.support(web::http::methods::DEL, deleteBPM);
 
@@ -257,8 +268,8 @@ int main() {
 	blink_thread.detach();
 
 
-	//initial the blink frequency
-	blink_frequency = 1000;
+	//initial the blink frequency to 1000ms
+	blink_gap_time = 1000;
 	
 
 	// ** This loop manages reading button state. **

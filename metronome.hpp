@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <chrono>
 #include <stdio.h>
+#define MIN 0
 class metronome
 {
 public:
@@ -109,11 +110,10 @@ public:
  	 * @brief Get the MIN or MAX BPM
 	 * @param mode 0 for get MIN, mode 1 for get MAX 
 	*/
-	size_t getMIN_MAX(int mode) const {
-		size_t res;
-		res = m_beats[0];
+	size_t getMinOrMax(int mode) const {
+		size_t res = m_beats[0];
 		//mode 0 for get MIN, mode 1 for get MAX
-		if (mode == 0) {
+		if (mode == MIN) {
 			for(int i = 1 ; i < beat_samples ; i++){
 				if(m_beats[i] < res) {
 					res = m_beats[i];
@@ -132,22 +132,20 @@ public:
 	}
 
 	/**
-	 * @brief Delete the MIN or MAX BPM
+	 * @brief Delete the MIN or MAX BPM, return true if the BPM is deleted successfully
 	 * @param mode 0 for delete MIN, mode 1 for delete MAX 
 	*/
-	void delMIN_MAX(int mode) {
-		size_t ans = getMIN_MAX(mode);
-		for (int i = 0; i< beat_samples ; i++){
-			if(m_beats[i] == ans){
-				m_beats[i] = 0;
-			}
-		}
+	bool deleteMinOrMax(int mode) {
+		size_t value = getMinOrMax(mode);
+		bool isSuccess = deleteBeatByValue(value);
+		return isSuccess;
 	}
 
 	/**
 	 * @brief Add the new BPM value to the BPM list
 	*/
 	void addBPM(size_t new_bpm) {
+		//replace the new BPM with the oldest one
 		for(int i = 0 ; i < beat_samples-1 ; i++) {
 			m_beats[i] = m_beats[i+1];
 		}

@@ -1014,4 +1014,5 @@ CMakeFiles/main.dir/main.cpp.o
  /usr/include/boost/asio/ssl/detail/read_op.hpp
  /usr/include/boost/asio/ssl/detail/shutdown_op.hpp
  /usr/include/boost/asio/ssl/detail/write_op.hpp
+ /home/pi/lab3/main.h
 

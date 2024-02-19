@@ -1012,7 +1012,8 @@ CMakeFiles/main.dir/main.cpp.o: /home/pi/lab3/main.cpp \
   /usr/include/boost/asio/detail/dependent_type.hpp \
   /usr/include/boost/asio/ssl/detail/read_op.hpp \
   /usr/include/boost/asio/ssl/detail/shutdown_op.hpp \
-  /usr/include/boost/asio/ssl/detail/write_op.hpp
+  /usr/include/boost/asio/ssl/detail/write_op.hpp \
+  /home/pi/lab3/main.h
 
 
 /usr/include/boost/asio/ssl/detail/write_op.hpp:
@@ -1370,6 +1371,8 @@ CMakeFiles/main.dir/main.cpp.o: /home/pi/lab3/main.cpp \
 /usr/include/boost/asio/ssl/rfc2818_verification.hpp:
 
 /usr/include/boost/asio/ssl/impl/error.ipp:
+
+/home/pi/lab3/main.h:
 
 /usr/include/boost/type_traits/is_base_and_derived.hpp:
 
